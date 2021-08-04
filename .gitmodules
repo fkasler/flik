@@ -1,0 +1,6 @@
+[submodule "projects/humble_chameleon"]
+	path = projects/humble_chameleon
+	url = https://github.com/claissg/humble_chameleon.git
+[submodule "projects/phishmonger"]
+	path = projects/phishmonger
+	url = https://github.com/fkasler/phishmonger.git

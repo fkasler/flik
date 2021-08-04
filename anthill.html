@@ -1,0 +1,510 @@
+<!doctype html>
+<html>
+
+	<head>
+		<title>Flik</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="./resources/jquery.min.js"></script>
+    <script type="text/javascript" src="./resources/jquery.cookie.js"></script>
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <script src="https://kit.fontawesome.com/2d526206ed.js" crossorigin="anonymous"></script>
+    <script>
+      $(function () {
+        var socket = io();
+
+        $('input').each(function(){
+          try{
+            let input_id = this.id
+            if($.cookie(input_id) !== ""){
+              $(`#${input_id}`).val($.cookie(input_id))
+            }
+          }catch(err){
+            console.log(`No saved value for ${input_id}`)
+          }
+        })
+
+        $('input').focusout(function(){
+          $('input').each(function(){
+            try{
+              let input_id = this.id
+              let input_val = $(`#${input_id}`).val()
+              document.cookie = `${input_id}=${input_val}`  
+            }catch(err){
+             console.log(err)
+            }
+          })
+        })
+
+        $('#domain_input_pm').keyup(function() {
+          $('#phishmonger_domain_input_hc').val($('#domain_input_pm').val())
+        })
+
+        $('#email_input_pm').keyup(function() {
+          $('#email_input_hc').val($('#email_input_pm').val())
+        })
+
+        $('#admin_cookie_input_pm').keyup(function() {
+          $('#phishmonger_cookie_input_hc').val($('#admin_cookie_input_pm').val())
+        })
+
+        $('#set_admin_input_pm').keyup(function() {
+          $('#set_admin_input_hc').val($('#set_admin_input_pm').val())
+        })
+
+        socket.on('show_error', function(url){
+          show_error(url)
+        });
+
+        socket.on('gandi_status_pm', function(status_object){
+          $(".dns_record").remove()
+          $("#gandi_records_pm").append(` \
+            <tr class="dns_record">\
+              <th>Type</th>\
+              <th>Name</th>\
+              <th>TTL</th>\
+              <th>Value</th>\
+            </tr>\
+          `);
+          // to show gandi hrefs add
+          //      <td>${this.rrset_href}</td>
+          $.each(status_object, function(){
+            $("#gandi_records_pm").append(` \
+              <tr class="dns_record">\
+                <td>${this.rrset_type}</td>\
+                <td>${this.rrset_name}</td>\
+                <td>${this.rrset_ttl}</td>\
+                <td>${this.rrset_values[0]}</td>\
+              </tr>\
+            `);
+          })
+        });
+
+        socket.on('gandi_status_o366', function(status_object){
+          $(".dns_record").remove()
+          $("#gandi_records_o366").append(` \
+            <tr class="dns_record">\
+              <th>Type</th>\
+              <th>Name</th>\
+              <th>TTL</th>\
+              <th>Value</th>\
+            </tr>\
+          `);
+          // to show gandi hrefs add
+          //      <td>${this.rrset_href}</td>
+          $.each(status_object, function(){
+            $("#gandi_records_o366").append(` \
+              <tr class="dns_record">\
+                <td>${this.rrset_type}</td>\
+                <td>${this.rrset_name}</td>\
+                <td>${this.rrset_ttl}</td>\
+                <td>${this.rrset_values[0]}</td>\
+              </tr>\
+            `);
+          })
+        });
+
+        socket.on('gandi_status_hc', function(status_object){
+          $(".dns_record").remove()
+          $("#gandi_records_hc").append(` \
+            <tr class="dns_record">\
+              <th>Type</th>\
+              <th>Name</th>\
+              <th>TTL</th>\
+              <th>Value</th>\
+            </tr>\
+          `);
+          // to show gandi hrefs add
+          //      <td>${this.rrset_href}</td>
+          $.each(status_object, function(){
+            $("#gandi_records_hc").append(` \
+              <tr class="dns_record">\
+                <td>${this.rrset_type}</td>\
+                <td>${this.rrset_name}</td>\
+                <td>${this.rrset_ttl}</td>\
+                <td>${this.rrset_values[0]}</td>\
+              </tr>\
+            `);
+          })
+        });
+
+        socket.on('server_message', function(message){
+          if($(".server_message").length > 14){
+	    $(".server_message")[0].remove()
+	  }
+	  $('#server_log').append($('<li type="text" class="server_message">').text(message));
+        });
+
+        $("#get_status_hc").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_hc").val()
+          socket.emit('get_status_hc', {"domain": domain, "api_key": api_key})
+        });
+
+        $("#get_status_pm").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_pm").val()
+          socket.emit('get_status_pm', {"domain": domain, "api_key": api_key})
+        });
+
+        $("#get_status_o366").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_o366").val()
+          socket.emit('get_status_o366', {"domain": domain, "api_key": api_key})
+        });
+
+        $("#clear_dns_records_hc").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_hc").val()
+          socket.emit('clear_dns_records_hc', {"domain": domain, "api_key": api_key})
+        });
+
+        $("#clear_dns_records_pm").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_pm").val()
+          socket.emit('clear_dns_records_pm', {"domain": domain, "api_key": api_key})
+        });
+
+        $("#clear_dns_records_o366").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_o366").val()
+          socket.emit('clear_dns_records_o366', {"domain": domain, "api_key": api_key})
+        });
+
+        $("#set_dns_records_hc").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let pm_domain = $("#phishmonger_domain_input_hc").val()
+          if(pm_domain == ''){
+            alert('set a phishmonger domain for your SPF record')
+            return
+          }
+          let domain = $("#domain_input_hc").val()
+          let server_ip = $("#server_ip_input_hc").val()
+          socket.emit('set_dns_records_hc', {"domain": domain, "api_key": api_key, "server_ip": server_ip, "pm_domain": pm_domain})
+        });
+
+        $("#set_dns_records_pm").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_pm").val()
+          let server_ip = $("#server_ip_input_pm").val()
+          socket.emit('set_dns_records_pm', {"domain": domain, "api_key": api_key, "server_ip": server_ip})
+        });
+
+        $("#set_dns_records_o366").click(function(){
+          let api_key = $.cookie('gandi_api_key')
+          let domain = $("#domain_input_o366").val()
+          let server_ip = $("#server_ip_input_o366").val()
+          socket.emit('set_dns_records_o366', {"domain": domain, "api_key": api_key, "server_ip": server_ip})
+        });
+
+        $("#deploy_hc").click(function(){
+          let hc_domain = $("#domain_input_hc").val()
+          let api_key = $.cookie('gandi_api_key')
+          let primary_target = $("#hide_behind_input_hc").val()
+          let secondary_target = $("#real_target_input_hc").val()
+          let search_string = $("#search_string_input_hc").val()
+          let wwwroot = $("#www_root_input_hc").val()
+          let admin_cookie = $("#admin_cookie_input_hc").val()
+          let set_admin_url = $("#set_admin_input_hc").val()
+          let pishmonger_domain = $("#phishmonger_domain_input_hc").val()
+          let phishmonger_cookie = $("#phishmonger_cookie_input_hc").val()
+          let email = $("#email_input_hc").val()
+ 
+          socket.emit('deploy_hc', {
+            "hc_domain": hc_domain,
+            "api_key": api_key,
+            "primary_target": primary_target,
+            "secondary_target": secondary_target,
+            "search_string": search_string,
+            "wwwroot": wwwroot,
+            "admin_cookie": admin_cookie,
+            "set_admin_url": set_admin_url,
+            "pishmonger_domain": pishmonger_domain,
+            "phishmonger_cookie": phishmonger_cookie,
+            "email": email
+          })
+        });
+
+        $("#deploy_pm").click(function(){
+          let pm_domain = $("#domain_input_pm").val()
+          let api_key = $.cookie('gandi_api_key')
+          let admin_cookie = $("#admin_cookie_input_pm").val()
+          let set_admin_url = $("#set_admin_input_pm").val()
+          let email = $("#email_input_pm").val()
+          let bot_id = $("#bot_id_pm").val()
+          let chat_id = $("#chat_id_pm").val()
+ 
+          socket.emit('deploy_pm', {
+            "pm_domain": pm_domain,
+            "api_key": api_key,
+            "admin_cookie": admin_cookie,
+            "set_admin_url": set_admin_url,
+            "email": email,
+            "bot_id": bot_id,
+            "chat_id": chat_id
+          })
+        });
+
+        $("#deploy_o366").click(function(){
+          let o366_domain = $("#domain_input_o366").val()
+          let api_key = $.cookie('gandi_api_key')
+          let email = $("#email_input_o366").val()
+          let server = $("#server_ip_input_o366").val()
+ 
+          socket.emit('deploy_o366', {
+            "o366_domain": o366_domain,
+            "api_key": api_key,
+            "email": email,
+            "server": server
+          })
+        });
+
+        $("#kali_update").click(function(){
+          let pm_domain = $("#domain_input_pm").val()
+ 
+          socket.emit('kali_update', {
+            "pm_domain": pm_domain
+          })
+        });
+
+        $("#add_hc_domain").click(function(){
+          let existing_hc_domain = prompt("Please enter an existing HC domain on the same server so we can make the proper API calls:")
+          let hc_domain = $("#domain_input_hc").val()
+          let api_key = $.cookie('gandi_api_key')
+          let primary_target = $("#hide_behind_input_hc").val()
+          let secondary_target = $("#real_target_input_hc").val()
+          let search_string = $("#search_string_input_hc").val()
+          let wwwroot = $("#www_root_input_hc").val()
+          let admin_cookie = $("#admin_cookie_input_hc").val()
+          let set_admin_url = $("#set_admin_input_hc").val()
+          let pishmonger_domain = $("#phishmonger_domain_input_hc").val()
+          let phishmonger_cookie = $("#phishmonger_cookie_input_hc").val()
+          let email = $("#email_input_hc").val()
+ 
+          socket.emit('add_hc_domain', {
+            "existing_hc_domain": existing_hc_domain,
+            "hc_domain": hc_domain,
+            "api_key": api_key,
+            "primary_target": primary_target,
+            "secondary_target": secondary_target,
+            "search_string": search_string,
+            "wwwroot": wwwroot,
+            "admin_cookie": admin_cookie,
+            "set_admin_url": set_admin_url,
+            "pishmonger_domain": pishmonger_domain,
+            "phishmonger_cookie": phishmonger_cookie,
+            "email": email
+          })
+        });
+
+      });
+    </script>
+  </head>
+  <body>
+
+    <style>
+      .shrink {
+        width: auto;
+        height: 300px;
+        margin: 0 auto;
+      }
+      .pad {
+        padding-left: 2em;
+        padding-right: 2em;
+      }
+      .spacer {
+        padding-top: 100px;
+        padding-bottom: 100px;
+      }
+      #gandi_records_hc > tr > td {
+        word-break: break-all;
+        border: 1px solid #007bff;
+      }
+      label {
+        font-weight: bold;
+      }
+
+
+      [data-tooltip] {
+        position: relative;
+        z-index: 2;
+        cursor: pointer;
+      }
+
+      /* Hide the tooltip content by default */
+      [data-tooltip]:before,
+      [data-tooltip]:after {
+        visibility: hidden;
+        -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+        filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=0);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Position tooltip above the element */
+      [data-tooltip]:before {
+        position: absolute;
+        bottom: 150%;
+        left: 50%;
+        margin-bottom: 5px;
+        margin-left: -80px;
+        padding: 7px;
+        width: 160px;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+        background-color: #000;
+        background-color: hsla(0, 0%, 20%, 0.9);
+        color: #fff;
+        content: attr(data-tooltip);
+        text-align: center;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      /* Triangle hack to make tooltip look like a speech bubble */
+      [data-tooltip]:after {
+        position: absolute;
+        bottom: 150%;
+        left: 50%;
+        margin-left: -5px;
+        width: 0;
+        border-top: 5px solid #000;
+        border-top: 5px solid hsla(0, 0%, 20%, 0.9);
+        border-right: 5px solid transparent;
+        border-left: 5px solid transparent;
+        content: " ";
+        font-size: 0;
+        line-height: 0;
+      }
+
+      /* Show tooltip content on hover */
+      [data-tooltip]:hover:before,
+      [data-tooltip]:hover:after {
+        visibility: visible;
+        -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+        filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=100);
+        opacity: 1;
+      }
+      .tt {
+        margin-left: 10px;
+      }
+      .server_message {
+        padding: 10px;
+        border: 1px solid #007bff;
+        border-radius: 5px;
+        margin: 10px 10px 10px 0px;
+      }
+      #server_log {
+        list-style: none;
+      }
+
+    </style>
+
+    <nav class="navbar navbar-dark bg-primary">
+      <div class="container-fluid">
+        <a class="navbar-brand">Flik</a>
+        <form class="d-flex">
+          <input class="form-control me-2" type="password" placeholder="Gandi Api Key" aria-label="Gandi Api Key" id="gandi_api_key">
+        </form>
+      </div>
+    </nav>
+    <br/>
+    <br/>
+    <div class="row pad">
+      <div class="col-6">
+      <div class="card border-primary">
+        <div class="card-header text-white bg-primary">Deploy Phishmonger</div>
+        <img src="/resources/images/phishship.gif" class="shrink card-img-top" alt="...">
+        <div class="card-body">
+          <label>Phishmonger Domain:</label>
+          <input type="text" id="domain_input_pm" placeholder="newdomain.com"></input>
+          <button class="btn btn-primary btn-small" id="get_status_pm">Get DNS Entries</button>
+          <button class="btn btn-primary btn-small" id="clear_dns_records_pm">Clear DNS Entries</button>
+          <br/>
+          <br/>
+          <label>Azure Server IP</label>
+          <input type="text" id="server_ip_input_pm" placeholder="Server IP"></input>
+          <button class="btn btn-primary btn-small" id="set_dns_records_pm">Set DNS Records</button>
+          <table id="gandi_records_pm">
+          </table>
+          <hr />
+          <br/>
+          <label>Email:</label>
+          <input type="text" id="email_input_pm" placeholder="myemail@issgs.net"></input><span class="tt" data-tooltip="Email for Letsencrypt cert."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Admin Cookie:</label>
+          <input type="text" id="admin_cookie_input_pm" placeholder="phishys3cret"></input><span class="tt" data-tooltip="Admin cookie value to access admin interface."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Admin Cookie URL:</label>
+          <input type="text" id="set_admin_input_pm" placeholder="longurlsearchstring"></input><span class="tt" data-tooltip="URL to set admin cookie in your browser (one time use)."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Telegram Bot ID</label>
+          <input type="text" id="bot_id_pm" placeholder="bot00112233:AABBCCDDEEFFGGHH11223344"></input><span class="tt" data-tooltip="Telegram Chat Bot ID. IT HAS TO START WITH 'bot'!!!"><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Telegram Chat ID</label>
+          <input type="text" id="chat_id_pm" placeholder="1122334455"></input><span class="tt" data-tooltip="Telegram chat ID with bot"><i class="fas fa-info-circle"></i></span>
+        </div>
+        <div class="card-footer text-muted">
+          <button class="btn btn-primary btn-small text-center" id="deploy_pm">Deploy Phishmonger (intial setup only)</button>
+        </div>
+      </div>
+    </div>
+      <!-- <button class="btn btn-primary btn-small" id="kali_update">Kali Update (run before anything else for new servers)</button> -->
+      <div class="col-6">
+      <div class="card border-primary">
+        <div class="card-header text-white bg-primary">Deploy Humble Chameleon</div>
+        <img src="/resources/images/chameleon.gif" class="shrink card-img-top" style="padding-top: 50px;" alt="...">
+        <div class="card-body">
+          <label>Humble Chameleon Domain</label>
+          <input type="text" id="domain_input_hc" placeholder="newdomain.com"></input>
+          <button class="btn btn-primary btn-small" id="get_status_hc">Get DNS Entries</button>
+          <button class="btn btn-primary btn-small" id="clear_dns_records_hc">Clear DNS Entries</button>
+          <br/>
+          <br/>
+          <label>Azure Server IP</label>
+          <input type="text" id="server_ip_input_hc" placeholder="Server IP"></input>
+          <button class="btn btn-primary btn-small" id="set_dns_records_hc">Set DNS Records</button>
+          <table id="gandi_records_hc">
+          </table>
+          <hr />
+          <br/>
+          <label>Email:</label>
+          <input type="text" id="email_input_hc" placeholder="myemail@issgs.net"></input><span class="tt" data-tooltip="Email for Letsencrypt cert."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Harmless Domain:</label>
+          <input type="text" id="hide_behind_input_hc" placeholder="harmless.com"></input><span class="tt" data-tooltip="Hide behind this domain."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Target Domain:</label>
+          <input type="text" id="real_target_input_hc" placeholder="realtarget.com"></input><span class="tt" data-tooltip="Target this domain."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>ID Parameter Name:</label>
+          <input type="text" id="search_string_input_hc" placeholder="doc_id"></input><span class="tt" data-tooltip="Search string that triggers the attack against real target. e.g. https://vpn.mydomain.com/login?doc_id=trackinguuid"><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Payload Search String:</label>
+          <input type="text" id="www_root_input_hc" placeholder="hr_documents"></input><span class="tt" data-tooltip="Search string to deliver payload directly from wwwroot instead of MitM attack. e.g. https://intranet.mydomain.com/hr_documents/new_policy.hta"><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Admin Cookie:</label>
+          <input type="text" id="admin_cookie_input_hc" placeholder="myadmins3cret"></input><span class="tt" data-tooltip="Admin cookie value to access hidden web interfaces."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Admin Cookie URL:</label>
+          <input type="text" id="set_admin_input_hc" placeholder="longurlsearchstring"></input><span class="tt" data-tooltip="URL to set admin cookie in your browser (one time use)."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Phishmonger Domain:</label>
+          <input type="text" id="phishmonger_domain_input_hc" placeholder="myphishmongerdomain.com"></input><span class="tt" data-tooltip="Phishmonger domain to send log data."><i class="fas fa-info-circle"></i></span>
+          <br/>
+          <label>Phishmonger Admin Cookie:</label>
+          <input type="text" id="phishmonger_cookie_input_hc" placeholder="phishmongeradmincookie"></input><span class="tt" data-tooltip="Admin cookie value for Phishmonger server."><i class="fas fa-info-circle"></i></span>
+        </div>
+        <div class="card-footer text-muted">
+          <button class="btn btn-primary btn-small" id="deploy_hc">Deploy Humble Chameleon (intial setup only)</button>
+        </div>
+        <div class="card-footer text-muted">
+          <button class="btn btn-primary btn-small" id="add_hc_domain">Add New Domain(After HC is running)</button>
+        </div>
+      </div>
+    </div>
+    </div>
+    <ul id="server_log"></ul>
+  </body>
+</html>

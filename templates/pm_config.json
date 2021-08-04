@@ -1,0 +1,16 @@
+{
+    "admin_domain": "{{ pm_domain }}",
+    "admin_cookie": {
+        "cookie_name": "admin_cookie",
+        "cookie_value": "{{ admin_cookie }}"
+    },
+    "set_admin": {
+        "switch": true,
+        "search_string": "{{ set_admin_url }}"
+    },
+    "signal_bot": {
+        "bot_id": "{{ bot_id }}",
+        "chat_id": "{{ chat_id }}"
+    },
+    "timezone": "America/New_York"
+}

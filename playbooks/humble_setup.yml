@@ -1,0 +1,201 @@
+---
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: Create tools directory
+    file:
+      path: '~/tools/'
+      state: directory
+
+  - name: Copy Humble Chameleon to Remote host
+    synchronize:
+      src: '../projects/humble_chameleon/'
+      dest: '~/tools/humble_chameleon/'
+
+  - name: Install Node 
+    become: true
+    apt:
+      name: nodejs
+      state: latest
+
+  - name: Allow Node to Bind Low Ports
+    become: true
+    capabilities:
+      path: /usr/bin/node
+      capability: CAP_NET_BIND_SERVICE=+eip
+      state: present
+
+  - name: Install NPM
+    become: true
+    apt: 
+      name: npm
+      state: latest
+
+  - name: Install Node dependencies based on package.json.
+    npm:
+      path: '~/tools/humble_chameleon/'
+
+  - name: Create or Update Humble Chameleon Config
+    template:
+      src: '../templates/hc_config.json'
+      dest: '~/tools/humble_chameleon/config.json'
+
+  - name: Create or Update Humble Chameleon Admin Config
+    template:
+      src: '../templates/hc_admin_config.json'
+      dest: '~/tools/humble_chameleon/admin_config.json'
+
+  - name: Install nginx
+    become: true
+    apt: 
+      name: nginx
+      state: latest
+
+  - name: Install PHP Processor for Locally Hosted Clones 
+    become: true
+    apt: 
+      name: php-fpm
+      state: latest
+
+  - name: Create Default Nginx Config
+    become: true
+    template:
+      src: '../templates/default_nginx.conf'
+      dest: '/etc/nginx/sites-available/default'
+
+  - name: Create Symlink to Default Nginx Config
+    become: true
+    file:
+      src: '/etc/nginx/sites-available/default'
+      dest: '/etc/nginx/sites-enabled/default'
+      state: link
+
+  - name: Generate an OpenSSL private key.
+    openssl_privatekey:
+      path: '~/tools/humble_chameleon/wwwroot/localhost.key'
+  
+  - name: Generate an OpenSSL CSR.
+    openssl_csr:
+      path: '~/tools/humble_chameleon/wwwroot/localhost.csr'
+      privatekey_path: '~/tools/humble_chameleon/wwwroot/localhost.key'
+      common_name: 'humble.local'
+  
+  - name: Generate a Self Signed OpenSSL Cert for Humble.local
+    openssl_certificate:
+      path: '~/tools/humble_chameleon/wwwroot/localhost.crt'
+      privatekey_path: '~/tools/humble_chameleon/wwwroot/localhost.key'
+      csr_path: '~/tools/humble_chameleon/wwwroot/localhost.csr'
+      provider: selfsigned
+
+  - name: Get the username running the deploy
+    become: false
+    local_action: command whoami
+    register: ansible_user_id
+
+  - name: Create Humble.local Nginx Config
+    become: true
+    template:
+      src: '../templates/humble_local.conf'
+      dest: '/etc/nginx/sites-available/humble_local.conf'
+
+  - name: Create Symlink to Default Nginx Config
+    become: true
+    file:
+      src: '/etc/nginx/sites-available/humble_local.conf'
+      dest: '/etc/nginx/sites-enabled/humble_local.conf'
+      state: link
+
+  - name: Create Nginx Log Directory
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/'
+      state: directory
+
+  - name: Create Humble.local Log Directory
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/humble.local/'
+      state: directory
+
+  - name: Touch Humble.local Log File
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/humble.local/access.log'
+      state: touch
+
+  - name: Touch Humble.local Error Log 
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/humble.local/error.log'
+      state: touch
+
+  - name: install letsencrypt
+    become: true
+    apt: 
+      name: letsencrypt
+      state: latest
+
+  - name: install gandi letsencrypt plugin for wildcards
+    become: true
+    pip: 
+      name: certbot-plugin-gandi
+
+  - name: create letsencrypt directory
+    become: true
+    file: 
+      path: '/var/www/letsencrypt'
+      state: directory
+
+  - name: Create gandi_api.ini for certbot plugin
+    become: true
+    template:
+      src: '../templates/gandi.ini'
+      dest: '~/gandi.ini'
+      mode: '0600'
+
+  - name: Create letsencrypt certificate
+    become: true
+    shell: 'certbot certonly -a certbot-plugin-gandi:dns --certbot-plugin-gandi:dns-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ hc_domain }} -d \*.{{ hc_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
+    args:
+      creates: /etc/letsencrypt/live/{{ hc_domain }}
+
+  - name: Remove Gandi API File
+    become: true
+    file:
+      path: '~/gandi.ini'
+      state: absent
+
+  - name: Create Humble Chameleon Nginx Config for the domain
+    become: true
+    template:
+      src: '../templates/hc_nginx.conf'
+      dest: '/etc/nginx/sites-available/{{ hc_domain }}.conf'
+
+  - name: Create symlink to enabled sites
+    become: true
+    file:
+      src: '/etc/nginx/sites-available/{{ hc_domain }}.conf'
+      dest: '/etc/nginx/sites-enabled/{{ hc_domain }}.conf'
+      state: link
+
+  - name: Create Nginx Log Directory
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/{{ hc_domain }}/'
+      state: directory
+
+  - name: Touch Nginx Log File
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/{{ hc_domain }}/access.log'
+      state: touch
+
+  - name: Start PHP Processor for Locally Hosted Sites
+    become: true
+    service: name=php7.4-fpm state=started
+
+  - name: Restart Nginx after config change
+    become: true
+    service: name=nginx state=restarted
+

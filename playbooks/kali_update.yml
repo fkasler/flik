@@ -1,0 +1,17 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+  - name: Add an Apt signing key
+    become: true
+    apt_key:
+      url: https://archive.kali.org/archive-key.asc
+      state: present
+  - name: Update and upgrade apt packages
+    become: true
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+    register: apt
+  - debug: msg={{ apt.stdout.split('\n')[:-1] }}

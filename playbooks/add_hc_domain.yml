@@ -1,0 +1,53 @@
+---
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: Create gandi_api.ini for certbot plugin
+    become: true
+    template:
+      src: '../templates/gandi.ini'
+      dest: '~/gandi.ini'
+      mode: '0600'
+
+  - name: Create letsencrypt certificate
+    become: true
+    shell: 'certbot certonly -a certbot-plugin-gandi:dns --certbot-plugin-gandi:dns-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ hc_domain }} -d \*.{{ hc_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
+    args:
+      creates: /etc/letsencrypt/live/{{ hc_domain }}
+
+  - name: Remove Gandi API File
+    become: true
+    file:
+      path: '~/gandi.ini'
+      state: absent
+
+  - name: Create Humble Chameleon Nginx Config for the domain
+    become: true
+    template:
+      src: '../templates/hc_nginx.conf'
+      dest: '/etc/nginx/sites-available/{{ hc_domain }}.conf'
+
+  - name: Create symlink to enabled sites
+    become: true
+    file:
+      src: '/etc/nginx/sites-available/{{ hc_domain }}.conf'
+      dest: '/etc/nginx/sites-enabled/{{ hc_domain }}.conf'
+      state: link
+
+  - name: Create Nginx Log Directory
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/{{ hc_domain }}/'
+      state: directory
+
+  - name: Touch Nginx Log File
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/{{ hc_domain }}/access.log'
+      state: touch
+
+  - name: Restart Nginx after config change
+    become: true
+    service: name=nginx state=restarted
+

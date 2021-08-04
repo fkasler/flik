@@ -1,0 +1,131 @@
+---
+- hosts: all
+  gather_facts: no
+
+  tasks:
+  - name: Create tools directory
+    file:
+      path: '~/tools/'
+      state: directory
+
+  - name: Copy Phishmonger to Remote host
+    synchronize:
+      src: '../projects/phishmonger/'
+      dest: '~/tools/phishmonger/'
+
+  - name: Copy DKIM Private Key to Server
+    copy:
+      src: '../dkim_private.pem'
+      dest: '~/tools/phishmonger/setup/dkim_private.pem'
+
+  - name: Copy DKIM Public Key to Server
+    copy:
+      src: '../dkim_public.pem'
+      dest: '~/tools/phishmonger/setup/dkim_public.pem'
+
+  - name: Install Node 
+    become: true
+    apt:
+      name: nodejs
+      state: latest
+
+  - name: Allow Node to Bind Low Ports
+    become: true
+    capabilities:
+      path: /usr/bin/node
+      capability: CAP_NET_BIND_SERVICE=+eip
+      state: present
+
+  - name: Install NPM
+    become: true
+    apt: 
+      name: npm
+      state: latest
+
+  - name: Install Node dependencies based on package.json.
+    npm:
+      path: '~/tools/phishmonger/'
+
+  - name: Create or Update Phishmonger Config
+    template:
+      src: '../templates/pm_config.json'
+      dest: '~/tools/phishmonger/config.json'
+
+  - name: Install nginx
+    become: true
+    apt: 
+      name: nginx
+      state: latest
+
+  - name: Create Nginx Log Directory
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/'
+      state: directory
+
+  - name: install letsencrypt
+    become: true
+    apt: 
+      name: letsencrypt
+      state: latest
+
+  - name: install gandi letsencrypt plugin for wildcards
+    become: true
+    pip: 
+      name: certbot-plugin-gandi
+
+  - name: create letsencrypt directory
+    become: true
+    file: 
+      path: '/var/www/letsencrypt'
+      state: directory
+
+  - name: Create gandi_api.ini for certbot plugin
+    become: true
+    template:
+      src: '../templates/gandi.ini'
+      dest: '~/gandi.ini'
+      mode: '0600'
+
+  - name: Create letsencrypt certificate
+    become: true
+    shell: 'certbot certonly -a certbot-plugin-gandi:dns --certbot-plugin-gandi:dns-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ pm_domain }} -d \*.{{ pm_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
+    args:
+      creates: /etc/letsencrypt/live/{{ pm_domain }}
+
+  - name: Remove Gandi API File
+    become: true
+    file:
+      path: '~/gandi.ini'
+      state: absent
+
+  - name: Create Phishmonger Nginx Config for the domain
+    become: true
+    template:
+      src: '../templates/pm_nginx.conf'
+      dest: '/etc/nginx/sites-available/{{ pm_domain }}.conf'
+
+  - name: Create symlink to enabled sites
+    become: true
+    file:
+      src: '/etc/nginx/sites-available/{{ pm_domain }}.conf'
+      dest: '/etc/nginx/sites-enabled/{{ pm_domain }}.conf'
+      state: link
+
+  - name: Create Nginx Log Directory
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/{{ pm_domain }}/'
+      state: directory
+
+  - name: Touch Nginx Log File
+    become: true
+    file:
+      path: '/var/log/nginx/vhosts/{{ pm_domain }}/access.log'
+      state: touch
+
+  - name: Restart Nginx after config change
+    become: true
+    service: name=nginx state=restarted
+
+

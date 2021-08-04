@@ -1,0 +1,10 @@
+{
+    "admin_cookie": {
+        "cookie_name": "admin_cookie",
+        "cookie_value": "{{ admin_cookie }}"
+    },
+    "set_admin": {
+        "switch": true,
+        "search_string": "{{ set_admin_url }}"
+    }
+}

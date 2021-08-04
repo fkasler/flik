@@ -1,0 +1,20 @@
+{
+  "name": "flik",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "pip install --user ansible"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dateformat": "^3.0.3",
+    "dns": "^0.2.2",
+    "express": "^4.17.1",
+    "node-ansible": "^0.5.5",
+    "node-rsa": "^1.0.7",
+    "request": "^2.88.0",
+    "socket.io": "^2.2.0"
+  }
+}

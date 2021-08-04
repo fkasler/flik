@@ -1,0 +1,22 @@
+{
+    "{{ hc_domain }}": {
+        "primary_target": "{{ primary_target }}",
+        "secondary_target": "{{ secondary_target }}",
+        "search_string": "{{ search_string }}",
+        "wwwroot": "{{ wwwroot }}",
+        "tracking_cookie": "cla_cookie",
+        "replacements": {
+            "string_to_be_replaced": "replacement_string"
+        },
+        "custom_headers": {},
+        "snitch": {
+            "snitch_string": "Logoff",
+            "redirect_url": "https://real.domain.com/index.html"
+        },
+        "logging_endpoint": {
+            "host": "{{ phishmonger_domain }}",
+            "url": "/create_event",
+            "auth_cookie": "admin_cookie={{ phishmonger_cookie }}"
+        }
+    }
+}
