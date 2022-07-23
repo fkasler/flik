@@ -8,10 +8,12 @@
       path: '~/tools/'
       state: directory
 
-  - name: Copy Humble Chameleon to Remote host
-    synchronize:
-      src: '../projects/humble_chameleon/'
+  - name: Clone a HC repository
+    git:
+      repo: https://github.com/claissg/humble_chameleon.git
       dest: '~/tools/humble_chameleon/'
+      clone: yes
+      update: yes
 
   - name: Install Node 
     become: true

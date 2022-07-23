@@ -8,10 +8,12 @@
       path: '~/tools/'
       state: directory
 
-  - name: Copy Phishmonger to Remote host
-    synchronize:
-      src: '../projects/phishmonger/'
+  - name: Clone a Phishmonger repository
+    git:
+      repo: https://github.com/fkasler/phishmonger.git
       dest: '~/tools/phishmonger/'
+      clone: yes
+      update: yes
 
   - name: Copy DKIM Private Key to Server
     copy:

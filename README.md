@@ -7,7 +7,7 @@ Installation
 Clone it, NPM it, run it. Keep in mind that this tool is meant to be run on your local host and uses Ansible to remotely configure your servers over SSH:
 
 ```
-git clone --recurse-submodules https://github.com/fkasler/flik.git
+git clone https://github.com/fkasler/flik.git
 cd flik
 npm install
 node index.js
