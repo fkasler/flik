@@ -22,19 +22,13 @@ npm run build
 OR you can just run the same pip command yourself:
 
 ```
-pip install --user ansible
-```
-
-OR pip3 if you fancy:
-
-```
-pip3 install --user ansible
+python3 -m pip install --user ansible
 ```
 
 Make sure that Ansible is in your PATH. Node will throw an "ENOENT" error when it can't find the ansible binary. To include ansible in your PATH, you may need something *like* the following in your ~/.bash_profile:
 
 ```
-export PATH=/Users/$USER/Library/Python/2.7/bin:$PATH
+export PATH=/Users/$USER/Library/Python/3.8/bin:$PATH
 ```
 
 Adjust per your OS and setup. You should get a path when testing with:

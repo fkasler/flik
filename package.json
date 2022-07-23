@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "pip install --user ansible"
+    "build": "python3 -m pip install --user ansible"
   },
   "author": "",
   "license": "ISC",
