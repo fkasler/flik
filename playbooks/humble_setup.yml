@@ -158,7 +158,7 @@
 
   - name: Create letsencrypt certificate
     become: true
-    shell: 'certbot certonly -a certbot-plugin-gandi:dns --certbot-plugin-gandi:dns-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ hc_domain }} -d \*.{{ hc_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
+    shell: 'sudo certbot certonly --authenticator dns-gandi --dns-gandi-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ hc_domain }} -d \*.{{ hc_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
     args:
       creates: /etc/letsencrypt/live/{{ hc_domain }}
 
@@ -195,7 +195,7 @@
 
   - name: Start PHP Processor for Locally Hosted Sites
     become: true
-    service: name=php7.4-fpm state=started
+    service: name=php8.1-fpm state=started
 
   - name: Restart Nginx after config change
     become: true
