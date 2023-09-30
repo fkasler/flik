@@ -11,7 +11,7 @@
 
   - name: Create letsencrypt certificate
     become: true
-    shell: 'certbot certonly -a certbot-plugin-gandi:dns --certbot-plugin-gandi:dns-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ hc_domain }} -d \*.{{ hc_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
+    shell: 'certbot certonly --authenticator dns-gandi --dns-gandi-credentials ~/gandi.ini --agree-tos -m {{ email }} -d {{ hc_domain }} -d \*.{{ hc_domain }} --server https://acme-v02.api.letsencrypt.org/directory'
     args:
       creates: /etc/letsencrypt/live/{{ hc_domain }}
 
