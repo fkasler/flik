@@ -8,7 +8,7 @@
         "switch": true,
         "search_string": "{{ set_admin_url }}"
     },
-    "signal_bot": {
+    "telegram_bot": {
         "bot_id": "{{ bot_id }}",
         "chat_id": "{{ chat_id }}"
     },
